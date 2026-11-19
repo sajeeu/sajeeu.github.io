@@ -34192,8 +34192,8 @@ var $async$aVC=A.p(function(a,b){if(a===1)return A.q(b,r)
 for(;;)switch(s){case 0:p=$.a99()
 o=t.N
 o=A.v(o,o)
-o.m(0,"API_BASE_URL","https://bali-camel-subtle-attribute.trycloudflare.com/api")
-o.m(0,"API_BASE_IMG","https://bali-camel-subtle-attribute.trycloudflare.com")
+o.m(0,"API_BASE_URL","https://response-pdt-specifics-ignored.trycloudflare.com/api")
+o.m(0,"API_BASE_IMG","https://response-pdt-specifics-ignored.trycloudflare.com")
 p.aJZ(o)
 s=1
 break
