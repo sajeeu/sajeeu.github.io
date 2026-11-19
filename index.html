@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+    The web app is served from the root of its domain ("/"). If it ever has
+    to live under a sub-path, build with `--base-href /sub/path/` and update
+    manifest.json (start_url, scope, id) and sw.js accordingly.
+  -->
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+  <meta name="description" content="Scan your table's QR code to browse the menu and order, or order takeaway from your favourite restaurants.">
+  <meta name="theme-color" content="#FFFFFF">
+  <meta name="color-scheme" content="light">
+  <meta name="format-detection" content="telephone=no">
+
+  <!-- Installed (home screen) experience -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- "default" keeps content below the iOS status bar / notch. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="EasyMenu">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://military-words-subscriber-shark.trycloudflare.com" crossorigin>
+
+  <title>EasyMenu</title>
+
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #FFFFFF;
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #em-splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      background: #FFFFFF;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #6B7280;
+      transition: opacity 200ms ease-out;
+      z-index: 10;
+    }
+    #em-splash img {
+      width: 88px;
+      height: 88px;
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(255, 51, 120, 0.25);
+    }
+    #em-splash .em-spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid #E8F3EC;
+      border-top-color: #1F6B40;
+      border-radius: 50%;
+      animation: em-spin 0.8s linear infinite;
+    }
+    #em-splash p { margin: 0; font-size: 15px; }
+    #em-splash.em-hidden { opacity: 0; pointer-events: none; }
+    @keyframes em-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      #em-splash .em-spinner { animation-duration: 2.4s; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Shown until Flutter renders its first frame. -->
+  <div id="em-splash" role="status" aria-live="polite">
+    <img src="icons/Icon-192.png" alt="" width="88" height="88">
+    <div class="em-spinner" aria-hidden="true"></div>
+    <p>Loading menu…</p>
+  </div>
+  <noscript>
+    <p style="font-family: sans-serif; padding: 24px; text-align: center;">
+      EasyMenu needs JavaScript to show the menu and take your order.
+    </p>
+  </noscript>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // Remove the HTML splash once Flutter has painted.
+      window.addEventListener('flutter-first-frame', function () {
+        var splash = document.getElementById('em-splash');
+        if (!splash) return;
+        splash.classList.add('em-hidden');
+        setTimeout(function () { splash.remove(); }, 250);
+      });
+
+      // ---- PWA helpers used by the Flutter app (lib/core/pwa) ----
+      var deferredInstallPrompt = null;
+      window.addEventListener('beforeinstallprompt', function (event) {
+        // Never show the browser mini-infobar automatically: the app offers
+        // installation only at an appropriate moment (after an order).
+        event.preventDefault();
+        deferredInstallPrompt = event;
+      });
+      window.addEventListener('appinstalled', function () {
+        deferredInstallPrompt = null;
+      });
+
+      function isStandalone() {
+        try {
+          return window.matchMedia('(display-mode: standalone)').matches ||
+            window.matchMedia('(display-mode: minimal-ui)').matches ||
+            window.navigator.standalone === true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function isIosSafari() {
+        var ua = window.navigator.userAgent || '';
+        var isIos = /iPad|iPhone|iPod/.test(ua) ||
+          (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+        // Other iOS browsers (CriOS, FxiOS, EdgiOS…) cannot always add to
+        // the home screen the same way; only guide Safari users.
+        var isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/.test(ua);
+        return isIos && isSafari;
+      }
+
+      window.easymenuPwa = {
+        isStandalone: isStandalone,
+        isIosSafari: isIosSafari,
+        canPromptInstall: function () { return deferredInstallPrompt !== null; },
+        promptInstall: function () {
+          if (!deferredInstallPrompt) return Promise.resolve(false);
+          var prompt = deferredInstallPrompt;
+          deferredInstallPrompt = null;
+          return prompt.prompt().then(function () {
+            return prompt.userChoice;
+          }).then(function (choice) {
+            return !!choice && choice.outcome === 'accepted';
+          }).catch(function () { return false; });
+        }
+      };
+
+      // ---- Service worker (offline shell + safe static caching) ----
+      if ('serviceWorker' in navigator &&
+          (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('sw.js', { scope: './' }).then(function (reg) {
+            // Check for a new version whenever the app comes back to the
+            // foreground (long-lived installed PWAs).
+            document.addEventListener('visibilitychange', function () {
+              if (document.visibilityState === 'visible') reg.update().catch(function () {});
+            });
+          }).catch(function (err) {
+            console.warn('Service worker registration failed', err);
+          });
+        });
+      }
+    })();
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

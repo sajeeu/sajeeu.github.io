@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#FFFFFF">
+  <title>EasyMenu: offline</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #F5F7FA; }
+    body {
+      display: flex; align-items: center; justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #111827; padding: 24px; box-sizing: border-box; text-align: center;
+    }
+    main { max-width: 360px; }
+    img { width: 72px; height: 72px; border-radius: 16px; }
+    h1 { font-size: 20px; margin: 20px 0 8px; }
+    p { color: #6B7280; line-height: 1.45; margin: 0 0 24px; }
+    button {
+      width: 100%; height: 48px; border: 0; border-radius: 10px;
+      background: #1F6B40; color: #FFFFFF; font-size: 16px; font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <img src="/icons/Icon-192.png" alt="">
+    <h1>You're offline</h1>
+    <p>EasyMenu needs an internet connection to load the menu and send your order. Reconnect and try again.</p>
+    <button type="button" onclick="location.reload()">Try again</button>
+  </main>
+</body>
+</html>
