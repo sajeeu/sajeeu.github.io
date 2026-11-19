@@ -9,12 +9,12 @@
  *     passed straight through.
  *  3. Start fast on repeat visits and show a helpful page when offline.
  *
- * 20261119112608-35b9c99 is replaced by tool/build_web.sh on every release build,
+ * 20261119184614-05a88d6 is replaced by tool/build_web.sh on every release build,
  * which rotates the static cache and removes the previous version's files.
  */
 'use strict';
 
-const VERSION = '20261119112608-35b9c99';
+const VERSION = '20261119184614-05a88d6';
 const STATIC_CACHE = `easymenu-static-${VERSION}`;
 const SHELL_CACHE = `easymenu-shell-${VERSION}`;
 const SCOPE = self.registration.scope; // e.g. https://menu.example.com/
